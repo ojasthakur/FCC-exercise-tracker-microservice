@@ -15,16 +15,12 @@ const createExercise = async (req, res) => {
     
     if (!req.body.date) {
         console.log('here')
-        const dateObject = new Date()
         const todayDate = new Date().toDateString()
         req.body.date = todayDate
-        req.body.dateObject = dateObject
     } else {
         const dateString = new Date(req.body.date).toDateString()
-        const dateObject = new Date(req.body.date)
 
         req.body.date = dateString
-        req.body.dateObject = dateObject
 
     }
 
@@ -47,30 +43,26 @@ const getExerciseLog = async (req, res) => {
     if (!user) {
         return res.json('no user with given id')
     }
-
+    const fieldList = '-_id description duration date'
     // console.log(req.query)
     let { from, to, limit } = req.query
     // const from = new Date(req.query.from)
     
     const result = await Exercise.find({
         userid: user._id
-    }).limit(limit)
+    }).select(fieldList).limit(limit)
     
     let logs
     if (from && to) {
         from = new Date(from)
-        console.log('from-date: ', from)
         
         to = new Date(to)
-        console.log('to-date: ',to)
 
         logs = result.filter(exercise => {
-            console.log('from- ', from, 'exercise- ', exercise.dateObject, 'to- ', to)
-            return from <= exercise.dateObject && exercise.dateObject <= to
+            const dateObject = new Date(exercise.date)
+
+            return from <= dateObject && dateObject <= to
         })
-        // if (limit) {
-            // logs = logs.limit(limit)
-        // }
         return res.json({
             _id: user._id,
             username: user.username,
@@ -81,14 +73,13 @@ const getExerciseLog = async (req, res) => {
     }
     if (from) {
         from = new Date(from)
-        console.log('from-date: ',from)
 
         logs = result.filter(exercise => {
-            return exercise.dateObject >= from
+            const dateObject = new Date(exercise.date)
+            console.log(dateObject, from)
+            return dateObject >= from
         })
-        // if (limit) {
-            // logs = logs.limit(limit)
-        // }
+        
         return res.json({
             _id: user._id,
             username: user.username,
@@ -98,14 +89,12 @@ const getExerciseLog = async (req, res) => {
     }
     if (to) { 
         to = new Date(to)
-        console.log('to-date: ',to)
 
         logs = result.filter(exercise => {
-            return exercise.dateObject <= to
+            const dateObject = new Date(exercise.date)
+            return dateObject <= to
         })
-        // if (limit) {
-            // logs = logs.limit(limit)
-        // }
+        
         return res.json({
             _id: user._id,
             username: user.username,
@@ -113,16 +102,6 @@ const getExerciseLog = async (req, res) => {
             log: logs
         })
     }
-    // const logs = await Exercise.find({
-    //     userid: user._id
-    // })
-    // const logs = await Exercise.find({
-    //     userid: user._id,
-    //     date: {
-    //         $gt: from
-    //     }
-    // }, '-_id description duration date dateObject')
-        // .sort({ duration: 1 }).limit(1)
   
     logs = result
     res.json({
